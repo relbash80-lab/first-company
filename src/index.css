@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  font-family: 'Noto Kufi Arabic', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* RTL support */
+[dir="rtl"] {
+  font-family: 'Noto Kufi Arabic', 'Segoe UI', system-ui, sans-serif;
+}
+
+[dir="ltr"] {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Smooth transitions */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Fix number inputs in RTL */
+input[type="number"] {
+  direction: ltr;
+  text-align: start;
+}
+
+/* Start/End logical properties for RTL/LTR compatibility */
+.text-start { text-align: start; }
+.text-end { text-align: end; }
+.ps-3 { padding-inline-start: 0.75rem; }
+.ps-10 { padding-inline-start: 2.5rem; }
+.pe-4 { padding-inline-end: 1rem; }
+.pe-3 { padding-inline-end: 0.75rem; }
+.ms-auto { margin-inline-start: auto; }
+.me-auto { margin-inline-end: auto; }
+.start-3 { inset-inline-start: 0.75rem; }
+.end-3 { inset-inline-end: 0.75rem; }
