@@ -1,78 +1,49 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { OrganizationProvider, useOrganization } from './context/OrganizationContext';
 import AppLayout from './components/layout/AppLayout';
 import LoginPage from './pages/LoginPage';
+import OrganizationSetupPage from './pages/OrganizationSetupPage';
 import DashboardPage from './pages/DashboardPage';
 import CarsPage from './pages/CarsPage';
 import ContainersPage from './pages/ContainersPage';
 import PaymentsPage from './pages/PaymentsPage';
 
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin w-10 h-10 border-4 border-teal-600 border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-gray-500">جاري التحميل...</p>
-        </div>
-      </div>
-    );
-  }
-  return user ? children : <Navigate to="/login" />;
+function LoadingScreen() {
+  return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="text-center"><div className="animate-spin w-10 h-10 border-4 border-teal-600 border-t-transparent rounded-full mx-auto mb-4"/><p className="text-slate-500">جارٍ تجهيز مساحة العمل...</p></div></div>;
+}
+
+function ProtectedWorkspace({ children }) {
+  const { user, loading: authLoading } = useAuth();
+  const { organization, loading: orgLoading, error } = useOrganization();
+  if (authLoading || (user && orgLoading)) return <LoadingScreen />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (error) return <div className="min-h-screen grid place-items-center p-6 text-red-700">{error.message}</div>;
+  if (!organization) return <OrganizationSetupPage />;
+  return children;
 }
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return null;
-  return user ? <Navigate to="/" /> : children;
+  if (loading) return <LoadingScreen />;
+  return user ? <Navigate to="/" replace /> : children;
 }
 
 function AppRoutes() {
-  return (
-    <Routes>
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <LoginPage />
-          </PublicRoute>
-        }
-      />
-      <Route
-        element={
-          <ProtectedRoute>
-            <AppLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="/cars" element={<CarsPage />} />
-        <Route path="/containers" element={<ContainersPage />} />
-        <Route path="/payments" element={<PaymentsPage />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
-  );
+  return <Routes>
+    <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+    <Route element={<ProtectedWorkspace><AppLayout /></ProtectedWorkspace>}>
+      <Route path="/" element={<DashboardPage />} />
+      <Route path="/cars" element={<CarsPage />} />
+      <Route path="/containers" element={<ContainersPage />} />
+      <Route path="/payments" element={<PaymentsPage />} />
+    </Route>
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes>;
 }
 
 export default function App() {
-  return (
-    <LanguageProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              duration: 3000,
-              style: { borderRadius: '10px', background: '#333', color: '#fff' },
-            }}
-          />
-          <AppRoutes />
-        </BrowserRouter>
-      </AuthProvider>
-    </LanguageProvider>
-  );
+  return <LanguageProvider><AuthProvider><OrganizationProvider><BrowserRouter><Toaster position="top-center" toastOptions={{ duration: 3500, style: { borderRadius: '12px', background: '#0f172a', color: '#fff' } }}/><AppRoutes /></BrowserRouter></OrganizationProvider></AuthProvider></LanguageProvider>;
 }

@@ -2,17 +2,20 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { subscribeToCars, calcPurchaseRemaining, calcShippingRemaining } from '../services/carService';
 import { HiOutlineCreditCard, HiOutlineSearch } from 'react-icons/hi';
+import { useOrganization } from '../context/OrganizationContext';
+import toast from 'react-hot-toast';
 
 export default function PaymentsPage() {
   const { t, lang } = useLanguage();
+  const { organizationId } = useOrganization();
   const [cars, setCars] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
 
   useEffect(() => {
-    const unsub = subscribeToCars(setCars);
+    const unsub = subscribeToCars(organizationId, setCars, (error) => toast.error(error.message));
     return unsub;
-  }, []);
+  }, [organizationId]);
 
   const fmt = (n) => `$${(Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 
