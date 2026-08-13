@@ -45,5 +45,5 @@ function AppRoutes() {
 }
 
 export default function App() {
-  return <LanguageProvider><AuthProvider><OrganizationProvider><BrowserRouter><Toaster position="top-center" toastOptions={{ duration: 3500, style: { borderRadius: '12px', background: '#0f172a', color: '#fff' } }}/><AppRoutes /></BrowserRouter></OrganizationProvider></AuthProvider></LanguageProvider>;
+  return <LanguageProvider><AuthProvider><OrganizationProvider><BrowserRouter basename={import.meta.env.BASE_URL}><Toaster position="top-center" toastOptions={{ duration: 3500, style: { borderRadius: '12px', background: '#0f172a', color: '#fff' } }}/><AppRoutes /></BrowserRouter></OrganizationProvider></AuthProvider></LanguageProvider>;
 }

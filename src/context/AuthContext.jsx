@@ -3,6 +3,10 @@ import { supabase } from '../config/supabase';
 
 const AuthContext = createContext(null);
 
+function appUrl(path = '') {
+  return new URL(`${import.meta.env.BASE_URL}${path}`, window.location.origin).toString();
+}
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +45,10 @@ export function AuthProvider({ children }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { display_name: displayName?.trim() || email.split('@')[0] } },
+        options: {
+          data: { display_name: displayName?.trim() || email.split('@')[0] },
+          emailRedirectTo: appUrl('login'),
+        },
       });
       if (error) throw error;
       return data;
@@ -52,7 +59,7 @@ export function AuthProvider({ children }) {
     },
     async resetPassword(email) {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login`,
+        redirectTo: appUrl('login'),
       });
       if (error) throw error;
     },
