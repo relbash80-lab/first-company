@@ -19,7 +19,7 @@ export default function Sidebar({ isOpen, onClose }) {
     { to: '/', icon: HiOutlineHome, label: t.dashboard },
     { to: '/cars', icon: HiOutlineTruck, label: t.cars },
     { to: '/containers', icon: HiOutlineCube, label: t.containers },
-    { to: '/payments', icon: HiOutlineCreditCard, label: t.payments },
+    { to: '/finance', icon: HiOutlineCreditCard, label: t.finance },
   ];
 
   const linkClass = ({ isActive }) =>

@@ -5,6 +5,7 @@ const en = {
   cars: 'Cars',
   containers: 'Containers',
   payments: 'Payments',
+  finance: 'Financial Center',
   settings: 'Settings',
   logout: 'Logout',
   login: 'Login',

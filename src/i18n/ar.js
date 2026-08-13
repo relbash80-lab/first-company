@@ -5,6 +5,7 @@ const ar = {
   cars: 'السيارات',
   containers: 'الحاويات',
   payments: 'الدفعات',
+  finance: 'المركز المالي',
   settings: 'الإعدادات',
   logout: 'تسجيل الخروج',
   login: 'تسجيل الدخول',
