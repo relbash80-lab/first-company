@@ -10,25 +10,27 @@ import {
   HiOutlineCog,
   HiOutlineLogout,
   HiOutlineGlobeAlt,
+  HiOutlineSearchCircle,
 } from 'react-icons/hi';
 
 export default function Sidebar({ isOpen, onClose }) {
   const { t, toggleLanguage, lang } = useLanguage();
   const { logout } = useAuth();
 
+  const labels = lang === 'ar' ? { workspace: 'مساحة العمليات', operations: 'التشغيل', vehicleCenter: 'مركز السيارات' } : { workspace: 'Operations workspace', operations: 'Operations', vehicleCenter: 'Vehicle center' };
   const links = [
     { to: '/', icon: HiOutlineHome, label: t.dashboard },
-    { to: '/cars', icon: HiOutlineTruck, label: t.cars },
+    { to: '/cars', icon: HiOutlineSearchCircle, label: labels.vehicleCenter },
     { to: '/containers', icon: HiOutlineCube, label: t.containers },
     { to: '/finance', icon: HiOutlineCreditCard, label: t.finance },
     { to: '/subscription', icon: HiOutlineBadgeCheck, label: t.subscription },
   ];
 
   const linkClass = ({ isActive }) =>
-    `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+    `flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all duration-200 ${
       isActive
-        ? 'bg-teal-600 text-white shadow-md'
-        : 'text-gray-300 hover:bg-gray-700/50 hover:text-white'
+        ? 'bg-white text-slate-950 shadow-lg shadow-slate-950/10'
+        : 'text-slate-300 hover:bg-white/8 hover:text-white'
     }`;
 
   return (
@@ -42,7 +44,7 @@ export default function Sidebar({ isOpen, onClose }) {
       )}
 
       <aside
-        className={`fixed top-0 ${lang === 'ar' ? 'right-0' : 'left-0'} h-full w-64 bg-gray-800 z-50 transform transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed top-0 ${lang === 'ar' ? 'right-0' : 'left-0'} h-full w-72 bg-[#0d1b2f] z-50 transform transition-transform duration-300 lg:translate-x-0 ${
           isOpen
             ? 'translate-x-0'
             : lang === 'ar'
@@ -51,14 +53,13 @@ export default function Sidebar({ isOpen, onClose }) {
         } flex flex-col`}
       >
         {/* Logo */}
-        <div className="p-6 border-b border-gray-700">
-          <h1 className="text-xl font-bold text-white text-center">
-            🚗 {t.appName}
-          </h1>
+        <div className="border-b border-white/10 px-5 py-5">
+          <div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-xl bg-teal-500 text-white shadow-lg shadow-teal-950/40"><HiOutlineTruck className="h-6 w-6" /></div><div><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-teal-300">First Company</p><h1 className="mt-0.5 text-sm font-black text-white">{labels.workspace}</h1></div></div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 space-y-1.5 overflow-y-auto p-4">
+          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">{labels.operations}</p>
           {links.map((link) => (
             <NavLink
               key={link.to}
@@ -74,7 +75,7 @@ export default function Sidebar({ isOpen, onClose }) {
         </nav>
 
         {/* Bottom actions */}
-        <div className="p-4 border-t border-gray-700 space-y-2">
+        <div className="space-y-2 border-t border-white/10 p-4">
           <button
             onClick={toggleLanguage}
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700/50 hover:text-white w-full transition-all"

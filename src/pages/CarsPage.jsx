@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import {
   subscribeToCars,
@@ -28,9 +29,10 @@ const STATUS_COLORS = {
 export default function CarsPage() {
   const { t, lang } = useLanguage();
   const { organizationId } = useOrganization();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [cars, setCars] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
   const [showForm, setShowForm] = useState(false);
   const [editingCar, setEditingCar] = useState(null);
   const [viewingCar, setViewingCar] = useState(null);
@@ -39,6 +41,20 @@ export default function CarsPage() {
     const unsub = subscribeToCars(organizationId, setCars, (error) => toast.error(error.message));
     return unsub;
   }, [organizationId]);
+
+  useEffect(() => {
+    setSearchTerm(searchParams.get('q') || '');
+    setStatusFilter(searchParams.get('status') || 'all');
+    if (searchParams.get('new') === '1') { setEditingCar(null); setShowForm(true); }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (searchTerm) next.set('q', searchTerm); else next.delete('q');
+    if (statusFilter !== 'all') next.set('status', statusFilter); else next.delete('status');
+    next.delete('new');
+    if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true });
+  }, [searchTerm, statusFilter, searchParams, setSearchParams]);
 
   const statusLabels = {
     purchased: t.purchased,
@@ -55,8 +71,12 @@ export default function CarsPage() {
       car.yearMakeModel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       car.vin?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       car.owner?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchExtended = !searchTerm || car.lotStock?.toLowerCase().includes(searchTerm.toLowerCase()) || car.containerNumber?.toLowerCase().includes(searchTerm.toLowerCase()) || car.buyingLocation?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = statusFilter === 'all' || car.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchAttention = searchParams.get('attention') !== '1' || calcPurchaseRemaining(car) > 0 || calcShippingRemaining(car) > 0;
+    const balance = searchParams.get('balance');
+    const matchBalance = !balance || (balance === 'purchase' ? calcPurchaseRemaining(car) > 0 : calcShippingRemaining(car) > 0);
+    return (matchSearch || matchExtended) && matchStatus && matchAttention && matchBalance;
   });
 
   const handleSave = async (data, isEdit) => {
