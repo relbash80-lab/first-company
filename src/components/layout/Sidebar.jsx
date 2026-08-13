@@ -6,6 +6,7 @@ import {
   HiOutlineTruck,
   HiOutlineCube,
   HiOutlineCreditCard,
+  HiOutlineBadgeCheck,
   HiOutlineCog,
   HiOutlineLogout,
   HiOutlineGlobeAlt,
@@ -20,6 +21,7 @@ export default function Sidebar({ isOpen, onClose }) {
     { to: '/cars', icon: HiOutlineTruck, label: t.cars },
     { to: '/containers', icon: HiOutlineCube, label: t.containers },
     { to: '/finance', icon: HiOutlineCreditCard, label: t.finance },
+    { to: '/subscription', icon: HiOutlineBadgeCheck, label: t.subscription },
   ];
 
   const linkClass = ({ isActive }) =>

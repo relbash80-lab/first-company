@@ -6,6 +6,7 @@ const ar = {
   containers: 'الحاويات',
   payments: 'الدفعات',
   finance: 'المركز المالي',
+  subscription: 'الاشتراك والباقات',
   settings: 'الإعدادات',
   logout: 'تسجيل الخروج',
   login: 'تسجيل الدخول',

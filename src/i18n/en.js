@@ -6,6 +6,7 @@ const en = {
   containers: 'Containers',
   payments: 'Payments',
   finance: 'Financial Center',
+  subscription: 'Subscription & Plans',
   settings: 'Settings',
   logout: 'Logout',
   login: 'Login',
