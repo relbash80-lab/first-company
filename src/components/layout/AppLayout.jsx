@@ -15,9 +15,9 @@ export default function AppLayout() {
         onClose={() => setSidebarOpen(false)}
       />
 
-      <div className={`${lang === 'ar' ? 'lg:mr-64' : 'lg:ml-64'} transition-all duration-300`}>
+      <div className={`app-shell-content ${lang === 'ar' ? 'lg:mr-64' : 'lg:ml-64'} transition-all duration-300`}>
         <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="p-4 md:p-6">
+        <main className="app-main p-4 md:p-6">
           <Outlet />
         </main>
       </div>

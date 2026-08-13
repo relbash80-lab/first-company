@@ -7,7 +7,7 @@ export default function Header({ onMenuToggle, title }) {
   const { organization, role } = useOrganization();
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex items-center gap-4 sticky top-0 z-30">
+    <header className="app-header bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex items-center gap-4 sticky top-0 z-30">
       <button
         onClick={onMenuToggle}
         className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600"

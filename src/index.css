@@ -1,6 +1,43 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@page {
+  size: A4;
+  margin: 0;
+}
+
+@media print {
+  html, body, #root {
+    background: white !important;
+  }
+
+  .no-print,
+  aside,
+  header.app-header {
+    display: none !important;
+  }
+
+  .app-shell-content {
+    margin: 0 !important;
+  }
+
+  .app-main {
+    padding: 0 !important;
+  }
+
+  .financial-document {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    max-width: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
+}
+
 :root {
   font-family: 'Noto Kufi Arabic', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
