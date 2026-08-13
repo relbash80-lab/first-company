@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { subscribeToCars } from '../services/carService';
-import { calcSharedCostPerCar } from '../services/containerService';
 import { HiOutlineCube, HiOutlineTruck } from 'react-icons/hi';
+import { useOrganization } from '../context/OrganizationContext';
+import toast from 'react-hot-toast';
 
 export default function ContainersPage() {
   const { t } = useLanguage();
+  const { organizationId } = useOrganization();
   const [cars, setCars] = useState([]);
 
   useEffect(() => {
-    const unsub = subscribeToCars(setCars);
+    const unsub = subscribeToCars(organizationId, setCars, (error) => toast.error(error.message));
     return unsub;
-  }, []);
+  }, [organizationId]);
 
   // تجميع السيارات حسب رقم الحاوية
   const containerMap = {};

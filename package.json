@@ -9,17 +9,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.6.0",
-    "firebase": "^11.7.0",
+    "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
-    "react-hot-toast": "^2.5.2"
+    "react-router-dom": "^7.6.0"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
     "@vitejs/plugin-react": "^4.5.2",
-    "vite": "^6.3.0",
+    "pgsql-ast-parser": "^12.0.2",
+    "supabase": "^2.114.0",
     "tailwindcss": "^4.1.0",
-    "@tailwindcss/vite": "^4.1.0"
+    "vite": "^6.3.0"
   }
 }

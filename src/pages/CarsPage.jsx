@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineSearch, HiOutlineX, HiOutlineEye } from 'react-icons/hi';
 import CarFormModal from '../components/cars/CarFormModal';
 import CarDetailModal from '../components/cars/CarDetailModal';
+import { useOrganization } from '../context/OrganizationContext';
 
 const STATUS_COLORS = {
   purchased: 'bg-yellow-100 text-yellow-800',
@@ -26,6 +27,7 @@ const STATUS_COLORS = {
 
 export default function CarsPage() {
   const { t, lang } = useLanguage();
+  const { organizationId } = useOrganization();
   const [cars, setCars] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -34,9 +36,9 @@ export default function CarsPage() {
   const [viewingCar, setViewingCar] = useState(null);
 
   useEffect(() => {
-    const unsub = subscribeToCars(setCars);
+    const unsub = subscribeToCars(organizationId, setCars, (error) => toast.error(error.message));
     return unsub;
-  }, []);
+  }, [organizationId]);
 
   const statusLabels = {
     purchased: t.purchased,
@@ -60,10 +62,10 @@ export default function CarsPage() {
   const handleSave = async (data, isEdit) => {
     try {
       if (isEdit) {
-        await updateCar(editingCar.id, data);
+        await updateCar(organizationId, editingCar.id, data);
         toast.success(t.carUpdated);
       } else {
-        await addCar(data);
+        await addCar(organizationId, data);
         toast.success(t.carAdded);
       }
       setShowForm(false);
@@ -80,7 +82,7 @@ export default function CarsPage() {
   const handleDelete = async (car) => {
     if (!window.confirm(t.confirmDelete)) return;
     try {
-      await deleteCar(car.id);
+      await deleteCar(organizationId, car.id);
       toast.success(t.carDeleted);
     } catch (err) {
       toast.error(err.message);

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { subscribeToCars, calcPurchaseRemaining, calcShippingRemaining } from '../services/carService';
 import { HiOutlineTruck, HiOutlineCash, HiOutlineCube, HiOutlineExclamationCircle } from 'react-icons/hi';
+import { useOrganization } from '../context/OrganizationContext';
+import toast from 'react-hot-toast';
 
 function StatCard({ icon: Icon, label, value, color, isCurrency }) {
   return (
@@ -32,12 +34,13 @@ const STATUS_COLORS = {
 
 export default function DashboardPage() {
   const { t } = useLanguage();
+  const { organizationId, organization } = useOrganization();
   const [cars, setCars] = useState([]);
 
   useEffect(() => {
-    const unsub = subscribeToCars(setCars);
+    const unsub = subscribeToCars(organizationId, setCars, (error) => toast.error(error.message));
     return unsub;
-  }, []);
+  }, [organizationId]);
 
   const totalCars = cars.length;
   const totalPurchaseRemaining = cars.reduce((sum, c) => sum + calcPurchaseRemaining(c), 0);
@@ -66,7 +69,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">{t.dashboard}</h1>
+      <div><p className="text-sm font-semibold text-teal-600 mb-1">{organization?.name}</p><h1 className="text-2xl font-bold text-gray-800">{t.dashboard}</h1></div>
 
       {/* بطاقات الإحصائيات */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
