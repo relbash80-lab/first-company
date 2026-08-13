@@ -134,6 +134,7 @@ const en = {
   vinExists: 'VIN already exists',
   requiredField: 'This field is required',
   invalidVin: 'Invalid VIN (must be 17 characters)',
+  subscriptionBlocked: 'A new vehicle cannot be created. Renew the subscription or review plan limits on the Subscription & Plans page.',
 
   // Currency
   currency: '$',

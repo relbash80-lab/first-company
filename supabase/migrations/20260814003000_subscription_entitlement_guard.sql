@@ -1,0 +1,163 @@
+begin;
+
+create or replace function public.subscription_entitlement(target_organization_id uuid)
+returns table (
+  can_create_vehicle boolean,
+  reason text,
+  subscription_status public.subscription_status,
+  plan_id text,
+  active_vehicle_count integer,
+  max_active_vehicles integer,
+  effective_end timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    case
+      when o.is_active is not true then false
+      when s.status = 'trialing' and s.trial_ends_at > now()
+        then p.max_active_vehicles is null or counts.active_vehicles < p.max_active_vehicles
+      when s.status = 'active' and s.current_period_end > now()
+        then p.max_active_vehicles is null or counts.active_vehicles < p.max_active_vehicles
+      else false
+    end as can_create_vehicle,
+    case
+      when o.is_active is not true then 'organization_inactive'
+      when s.status = 'trialing' and coalesce(s.trial_ends_at, '-infinity') <= now() then 'trial_expired'
+      when s.status = 'active' and coalesce(s.current_period_end, '-infinity') <= now() then 'subscription_expired'
+      when s.status in ('past_due', 'suspended', 'canceled') then s.status::text
+      when p.max_active_vehicles is not null and counts.active_vehicles >= p.max_active_vehicles then 'vehicle_limit_reached'
+      else 'allowed'
+    end as reason,
+    s.status,
+    s.plan_id,
+    counts.active_vehicles,
+    p.max_active_vehicles,
+    case when s.status = 'trialing' then s.trial_ends_at else s.current_period_end end
+  from public.organizations o
+  left join public.subscriptions s on s.organization_id = o.id
+  left join public.plans p on p.id = s.plan_id
+  cross join lateral (
+    select count(*)::integer as active_vehicles
+    from public.vehicles v
+    where v.organization_id = o.id and v.status <> 'released'
+  ) counts
+  where o.id = target_organization_id
+    and (public.is_organization_member(o.id) or public.is_platform_admin());
+$$;
+
+create or replace function public.save_vehicle_record(
+  p_organization_id uuid,
+  p_vehicle_id uuid,
+  p_payload jsonb
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  result_vehicle_id uuid;
+  result_client_id uuid;
+  result_container_id uuid;
+  client_name text := nullif(trim(p_payload->>'owner'), '');
+  container_number text := nullif(trim(p_payload->>'containerNumber'), '');
+  requested_status public.vehicle_status := coalesce(nullif(p_payload->>'status', '')::public.vehicle_status, 'purchased');
+  existing_status public.vehicle_status;
+  entitlement record;
+  item jsonb;
+begin
+  if not public.has_organization_role(
+    p_organization_id,
+    array['owner','manager','buyer','shipping_officer','accountant']::public.organization_role[]
+  ) then raise exception 'Not authorized for this organization'; end if;
+
+  if p_vehicle_id is not null then
+    select status into existing_status from public.vehicles
+    where id = p_vehicle_id and organization_id = p_organization_id for update;
+    if not found then raise exception 'Vehicle not found'; end if;
+  end if;
+
+  if p_vehicle_id is null or (existing_status = 'released' and requested_status <> 'released') then
+    perform pg_advisory_xact_lock(hashtextextended(p_organization_id::text || ':active_vehicle_limit', 0));
+    select * into entitlement from public.subscription_entitlement(p_organization_id);
+    if not found or entitlement.can_create_vehicle is not true then
+      raise exception 'SUBSCRIPTION_BLOCKED:%', coalesce(entitlement.reason, 'subscription_missing');
+    end if;
+  end if;
+
+  if client_name is not null then
+    select id into result_client_id from public.clients
+    where organization_id = p_organization_id and lower(name) = lower(client_name)
+    order by created_at limit 1;
+    if result_client_id is null then
+      insert into public.clients (organization_id, name) values (p_organization_id, client_name)
+      returning id into result_client_id;
+    end if;
+  end if;
+
+  if p_vehicle_id is null then
+    insert into public.vehicles (
+      organization_id, client_id, vin, year, make, model, trim, auction,
+      lot_stock, buying_location, buying_date, purchase_wire_date, status, notes
+    ) values (
+      p_organization_id, result_client_id, upper(trim(p_payload->>'vin')),
+      nullif(p_payload->>'year', '')::smallint, nullif(trim(p_payload->>'make'), ''),
+      nullif(trim(p_payload->>'model'), ''), nullif(trim(p_payload->>'trim'), ''),
+      coalesce(nullif(p_payload->>'auction', ''), 'Other'), nullif(trim(p_payload->>'lotStock'), ''),
+      nullif(trim(p_payload->>'buyingLocation'), ''), nullif(p_payload->>'buyingDate', '')::date,
+      nullif(p_payload->>'wireDate', '')::date, requested_status, nullif(trim(p_payload->>'notes'), '')
+    ) returning id into result_vehicle_id;
+  else
+    update public.vehicles set
+      client_id = result_client_id, year = nullif(p_payload->>'year', '')::smallint,
+      make = nullif(trim(p_payload->>'make'), ''), model = nullif(trim(p_payload->>'model'), ''),
+      trim = nullif(trim(p_payload->>'trim'), ''), auction = coalesce(nullif(p_payload->>'auction', ''), 'Other'),
+      lot_stock = nullif(trim(p_payload->>'lotStock'), ''), buying_location = nullif(trim(p_payload->>'buyingLocation'), ''),
+      buying_date = nullif(p_payload->>'buyingDate', '')::date, purchase_wire_date = nullif(p_payload->>'wireDate', '')::date,
+      status = requested_status, notes = nullif(trim(p_payload->>'notes'), ''), updated_at = now()
+    where id = p_vehicle_id and organization_id = p_organization_id
+    returning id into result_vehicle_id;
+  end if;
+
+  delete from public.charges where organization_id = p_organization_id and vehicle_id = result_vehicle_id and source = 'vehicle_form';
+  for item in select value from jsonb_array_elements(coalesce(p_payload->'charges', '[]'::jsonb)) loop
+    if coalesce((item->>'amount')::numeric, 0) > 0 then
+      insert into public.charges (organization_id, vehicle_id, category, description, amount, source)
+      values (p_organization_id, result_vehicle_id, (item->>'category')::public.charge_category, nullif(item->>'description', ''), (item->>'amount')::numeric, 'vehicle_form');
+    end if;
+  end loop;
+
+  delete from public.container_vehicles where organization_id = p_organization_id and vehicle_id = result_vehicle_id;
+  if container_number is not null then
+    insert into public.containers (organization_id, number, shipping_line, shipping_port, destination, transit_arrival_date, shipping_wire_date)
+    values (p_organization_id, upper(container_number), nullif(trim(p_payload->>'shippingLine'), ''), nullif(trim(p_payload->>'shippingPort'), ''), nullif(trim(p_payload->>'destination'), ''), nullif(p_payload->>'transitArrivalDate', '')::date, nullif(p_payload->>'shippingWireDate', '')::date)
+    on conflict (organization_id, number) do update set shipping_line = excluded.shipping_line, shipping_port = excluded.shipping_port, destination = excluded.destination, transit_arrival_date = excluded.transit_arrival_date, shipping_wire_date = excluded.shipping_wire_date, updated_at = now()
+    returning id into result_container_id;
+    insert into public.container_vehicles (organization_id, container_id, vehicle_id) values (p_organization_id, result_container_id, result_vehicle_id);
+  end if;
+
+  if p_vehicle_id is null then
+    if coalesce((p_payload->>'purchasePaid')::numeric, 0) > 0 then
+      insert into public.payments (organization_id, vehicle_id, type, amount, reference, notes)
+      values (p_organization_id, result_vehicle_id, 'purchase', (p_payload->>'purchasePaid')::numeric, 'opening-entry', 'Initial amount entered while creating the vehicle');
+    end if;
+    if coalesce((p_payload->>'shippingPaid')::numeric, 0) > 0 then
+      insert into public.payments (organization_id, vehicle_id, type, amount, reference, notes)
+      values (p_organization_id, result_vehicle_id, 'shipping', (p_payload->>'shippingPaid')::numeric, 'opening-entry', 'Initial amount entered while creating the vehicle');
+    end if;
+  end if;
+
+  return result_vehicle_id;
+end;
+$$;
+
+revoke all on function public.subscription_entitlement(uuid) from public;
+grant execute on function public.subscription_entitlement(uuid) to authenticated;
+revoke all on function public.save_vehicle_record(uuid, uuid, jsonb) from public;
+grant execute on function public.save_vehicle_record(uuid, uuid, jsonb) to authenticated;
+
+commit;

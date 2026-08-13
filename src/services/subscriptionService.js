@@ -14,10 +14,11 @@ export async function loadSubscriptionCenter(organizationId) {
     supabase.from('vehicles').select('*', { count: 'exact', head: true }).eq('organization_id', organizationId).neq('status', 'released'),
     supabase.from('platform_admins').select('user_id').maybeSingle(),
     supabase.from('usage_counters').select('storage_bytes').eq('organization_id', organizationId).order('period_start', { ascending: false }).limit(1).maybeSingle(),
+    supabase.rpc('subscription_entitlement', { target_organization_id: organizationId }).maybeSingle(),
   ]);
   throwFirstError(results);
 
-  const [plans, subscription, invoices, members, activeVehicles, platformAdmin, usage] = results;
+  const [plans, subscription, invoices, members, activeVehicles, platformAdmin, usage, entitlement] = results;
   let pendingPayments = [];
   if (platformAdmin.data) {
     const { data, error } = await supabase
@@ -36,9 +37,30 @@ export async function loadSubscriptionCenter(organizationId) {
     memberCount: members.count ?? 0,
     activeVehicleCount: activeVehicles.count ?? 0,
     storageMb: Math.ceil(Number(usage.data?.storage_bytes || 0) / 1024 / 1024),
+    entitlement: entitlement.data ?? null,
     isPlatformAdmin: Boolean(platformAdmin.data),
     pendingPayments,
   };
+}
+
+export async function loadSubscriptionInvoiceDocument(organizationId, invoiceId) {
+  const results = await Promise.all([
+    supabase.from('subscription_invoices').select('*, plans(name_ar, name_en, max_users, max_active_vehicles, max_storage_mb), subscription_payments!subscription_payments_invoice_id_fkey(*)').eq('organization_id', organizationId).eq('id', invoiceId).single(),
+    supabase.from('organizations').select('id, name, default_currency, timezone').eq('id', organizationId).single(),
+    supabase.from('financial_settings').select('*').eq('organization_id', organizationId).maybeSingle(),
+  ]);
+  throwFirstError(results);
+  return { ...results[0].data, organization: results[1].data, settings: results[2].data };
+}
+
+export async function loadSubscriptionPaymentDocument(organizationId, paymentId) {
+  const results = await Promise.all([
+    supabase.from('subscription_payments').select('*, subscription_invoices!subscription_payments_invoice_id_fkey(invoice_number, billing_cycle, period_start, period_end, plans(name_ar, name_en))').eq('organization_id', organizationId).eq('id', paymentId).eq('status', 'confirmed').single(),
+    supabase.from('organizations').select('id, name, default_currency, timezone').eq('id', organizationId).single(),
+    supabase.from('financial_settings').select('*').eq('organization_id', organizationId).maybeSingle(),
+  ]);
+  throwFirstError(results);
+  return { ...results[0].data, organization: results[1].data, settings: results[2].data };
 }
 
 export async function requestSubscriptionInvoice(organizationId, planId, billingCycle) {

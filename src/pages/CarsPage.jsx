@@ -73,6 +73,8 @@ export default function CarsPage() {
     } catch (err) {
       if (err.message === 'VIN_EXISTS') {
         toast.error(t.vinExists);
+      } else if (['trial_expired', 'subscription_expired', 'past_due', 'suspended', 'canceled', 'vehicle_limit_reached', 'subscription_missing', 'organization_inactive', 'subscription_blocked'].includes(err.message)) {
+        toast.error(t.subscriptionBlocked);
       } else {
         toast.error(err.message);
       }

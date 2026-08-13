@@ -89,6 +89,7 @@ export async function addCar(organizationId, carData) {
   const { data, error } = await supabase.rpc('save_vehicle_record', { p_organization_id: organizationId, p_vehicle_id: null, p_payload: toPayload(carData) });
   if (error) {
     if (error.code === '23505' && error.message.includes('vehicles_organization_id_vin_key')) throw new Error('VIN_EXISTS');
+    if (error.message?.includes('SUBSCRIPTION_BLOCKED:')) throw new Error(error.message.match(/SUBSCRIPTION_BLOCKED:([a-z_]+)/)?.[1] || 'subscription_blocked');
     throw error;
   }
   return data;
@@ -96,7 +97,10 @@ export async function addCar(organizationId, carData) {
 
 export async function updateCar(organizationId, id, carData) {
   const { data, error } = await supabase.rpc('save_vehicle_record', { p_organization_id: organizationId, p_vehicle_id: id, p_payload: toPayload(carData) });
-  if (error) throw error;
+  if (error) {
+    if (error.message?.includes('SUBSCRIPTION_BLOCKED:')) throw new Error(error.message.match(/SUBSCRIPTION_BLOCKED:([a-z_]+)/)?.[1] || 'subscription_blocked');
+    throw error;
+  }
   return data;
 }
 

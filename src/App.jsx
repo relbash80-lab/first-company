@@ -13,6 +13,7 @@ import PaymentsPage from './pages/PaymentsPage';
 import FinancePage from './pages/FinancePage';
 import FinancialDocumentPage from './pages/FinancialDocumentPage';
 import SubscriptionPage from './pages/SubscriptionPage';
+import SubscriptionDocumentPage from './pages/SubscriptionDocumentPage';
 
 function LoadingScreen() {
   return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="text-center"><div className="animate-spin w-10 h-10 border-4 border-teal-600 border-t-transparent rounded-full mx-auto mb-4"/><p className="text-slate-500">جارٍ تجهيز مساحة العمل...</p></div></div>;
@@ -47,6 +48,8 @@ function AppRoutes() {
       <Route path="/finance/receipts/:id/print" element={<FinancialDocumentPage kind="receipt" />} />
       <Route path="/finance/clients/:id/statement" element={<FinancialDocumentPage kind="statement" />} />
       <Route path="/subscription" element={<SubscriptionPage />} />
+      <Route path="/subscription/invoices/:id/print" element={<SubscriptionDocumentPage kind="invoice" />} />
+      <Route path="/subscription/payments/:id/receipt" element={<SubscriptionDocumentPage kind="payment" />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>;

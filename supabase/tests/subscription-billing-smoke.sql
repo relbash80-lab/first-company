@@ -3,7 +3,7 @@
 
 begin;
 
-select plan(15);
+select plan(19);
 
 select has_table('public', 'subscription_sequences', 'subscription sequence table exists');
 select has_table('public', 'subscription_invoices', 'subscription invoices table exists');
@@ -37,6 +37,23 @@ select has_function(
 select has_function(
   'public', 'configure_plan_pricing', array['text','numeric','numeric','jsonb'],
   'plan pricing configuration function exists'
+);
+select has_function(
+  'public', 'subscription_entitlement', array['uuid'],
+  'subscription entitlement function exists'
+);
+
+select ok(
+  pg_get_functiondef('public.subscription_entitlement(uuid)'::regprocedure) like '%vehicle_limit_reached%',
+  'subscription entitlement checks the active vehicle limit'
+);
+select ok(
+  pg_get_functiondef('public.save_vehicle_record(uuid,uuid,jsonb)'::regprocedure) like '%SUBSCRIPTION_BLOCKED:%',
+  'vehicle writes raise a stable subscription block reason'
+);
+select ok(
+  pg_get_functiondef('public.save_vehicle_record(uuid,uuid,jsonb)'::regprocedure) like '%pg_advisory_xact_lock%',
+  'vehicle entitlement enforcement serializes concurrent creates'
 );
 
 select ok(
