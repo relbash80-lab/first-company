@@ -14,6 +14,7 @@ import FinancePage from './pages/FinancePage';
 import FinancialDocumentPage from './pages/FinancialDocumentPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import SubscriptionDocumentPage from './pages/SubscriptionDocumentPage';
+import PlatformAdminPage from './pages/PlatformAdminPage';
 
 function LoadingScreen() {
   return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="text-center"><div className="animate-spin w-10 h-10 border-4 border-teal-600 border-t-transparent rounded-full mx-auto mb-4"/><p className="text-slate-500">جارٍ تجهيز مساحة العمل...</p></div></div>;
@@ -21,11 +22,11 @@ function LoadingScreen() {
 
 function ProtectedWorkspace({ children }) {
   const { user, loading: authLoading } = useAuth();
-  const { organization, loading: orgLoading, error } = useOrganization();
+  const { organization, isPlatformAdmin, loading: orgLoading, error } = useOrganization();
   if (authLoading || (user && orgLoading)) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   if (error) return <div className="min-h-screen grid place-items-center p-6 text-red-700">{error.message}</div>;
-  if (!organization) return <OrganizationSetupPage />;
+  if (!organization && !isPlatformAdmin) return <OrganizationSetupPage />;
   return children;
 }
 
@@ -35,21 +36,41 @@ function PublicRoute({ children }) {
   return user ? <Navigate to="/" replace /> : children;
 }
 
+function PlatformAdminRoute({ children }) {
+  const { isPlatformAdmin, loading } = useOrganization();
+  if (loading) return <LoadingScreen />;
+  return isPlatformAdmin ? children : <Navigate to="/" replace />;
+}
+
+function TenantRoute({ children }) {
+  const { organization, isPlatformAdmin, loading } = useOrganization();
+  if (loading) return <LoadingScreen />;
+  if (!organization) return isPlatformAdmin ? <Navigate to="/platform" replace /> : <OrganizationSetupPage />;
+  return children;
+}
+
+function WorkspaceHome() {
+  const { organization, isPlatformAdmin } = useOrganization();
+  if (!organization && isPlatformAdmin) return <Navigate to="/platform" replace />;
+  return <DashboardPage />;
+}
+
 function AppRoutes() {
   return <Routes>
     <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
     <Route element={<ProtectedWorkspace><AppLayout /></ProtectedWorkspace>}>
-      <Route path="/" element={<DashboardPage />} />
-      <Route path="/cars" element={<CarsPage />} />
-      <Route path="/containers" element={<ContainersPage />} />
-      <Route path="/payments" element={<PaymentsPage />} />
-      <Route path="/finance" element={<FinancePage />} />
-      <Route path="/finance/invoices/:id/print" element={<FinancialDocumentPage kind="invoice" />} />
-      <Route path="/finance/receipts/:id/print" element={<FinancialDocumentPage kind="receipt" />} />
-      <Route path="/finance/clients/:id/statement" element={<FinancialDocumentPage kind="statement" />} />
-      <Route path="/subscription" element={<SubscriptionPage />} />
-      <Route path="/subscription/invoices/:id/print" element={<SubscriptionDocumentPage kind="invoice" />} />
-      <Route path="/subscription/payments/:id/receipt" element={<SubscriptionDocumentPage kind="payment" />} />
+      <Route path="/" element={<WorkspaceHome />} />
+      <Route path="/cars" element={<TenantRoute><CarsPage /></TenantRoute>} />
+      <Route path="/containers" element={<TenantRoute><ContainersPage /></TenantRoute>} />
+      <Route path="/payments" element={<TenantRoute><PaymentsPage /></TenantRoute>} />
+      <Route path="/finance" element={<TenantRoute><FinancePage /></TenantRoute>} />
+      <Route path="/finance/invoices/:id/print" element={<TenantRoute><FinancialDocumentPage kind="invoice" /></TenantRoute>} />
+      <Route path="/finance/receipts/:id/print" element={<TenantRoute><FinancialDocumentPage kind="receipt" /></TenantRoute>} />
+      <Route path="/finance/clients/:id/statement" element={<TenantRoute><FinancialDocumentPage kind="statement" /></TenantRoute>} />
+      <Route path="/subscription" element={<TenantRoute><SubscriptionPage /></TenantRoute>} />
+      <Route path="/subscription/invoices/:id/print" element={<TenantRoute><SubscriptionDocumentPage kind="invoice" /></TenantRoute>} />
+      <Route path="/subscription/payments/:id/receipt" element={<TenantRoute><SubscriptionDocumentPage kind="payment" /></TenantRoute>} />
+      <Route path="/platform" element={<PlatformAdminRoute><PlatformAdminPage /></PlatformAdminRoute>} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>;

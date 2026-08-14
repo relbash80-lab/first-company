@@ -7,28 +7,35 @@ const OrganizationContext = createContext(null);
 export function OrganizationProvider({ children }) {
   const { user } = useAuth();
   const [membership, setMembership] = useState(null);
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const refreshOrganization = useCallback(async () => {
     if (!user) {
       setMembership(null);
+      setIsPlatformAdmin(false);
       setLoading(false);
       return;
     }
 
     setLoading(true);
     setError(null);
-    const { data, error: queryError } = await supabase
-      .from('organization_members')
-      .select('organization_id, role, organizations(id, name, slug, default_currency)')
-      .eq('user_id', user.id)
-      .order('joined_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
+    const [membershipResult, platformAdminResult] = await Promise.all([
+      supabase
+        .from('organization_members')
+        .select('organization_id, role, organizations(id, name, slug, default_currency)')
+        .eq('user_id', user.id)
+        .order('joined_at', { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+      supabase.from('platform_admins').select('user_id').eq('user_id', user.id).maybeSingle(),
+    ]);
 
+    const queryError = membershipResult.error || platformAdminResult.error;
     if (queryError) setError(queryError);
-    setMembership(data ?? null);
+    setMembership(membershipResult.data ?? null);
+    setIsPlatformAdmin(Boolean(platformAdminResult.data));
     setLoading(false);
   }, [user]);
 
@@ -51,12 +58,13 @@ export function OrganizationProvider({ children }) {
     membership,
     organization: membership?.organizations ?? null,
     role: membership?.role ?? null,
+    isPlatformAdmin,
     organizationId: membership?.organization_id ?? null,
     loading,
     error,
     createOrganization,
     refreshOrganization,
-  }), [createOrganization, error, loading, membership, refreshOrganization]);
+  }), [createOrganization, error, isPlatformAdmin, loading, membership, refreshOrganization]);
 
   return <OrganizationContext.Provider value={value}>{children}</OrganizationContext.Provider>;
 }

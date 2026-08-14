@@ -11,19 +11,28 @@ import {
   HiOutlineLogout,
   HiOutlineGlobeAlt,
   HiOutlineSearchCircle,
+  HiOutlineShieldCheck,
 } from 'react-icons/hi';
+import { useOrganization } from '../../context/OrganizationContext';
 
 export default function Sidebar({ isOpen, onClose }) {
   const { t, toggleLanguage, lang } = useLanguage();
   const { logout } = useAuth();
+  const { organization, isPlatformAdmin } = useOrganization();
 
-  const labels = lang === 'ar' ? { workspace: 'مساحة العمليات', operations: 'التشغيل', vehicleCenter: 'مركز السيارات' } : { workspace: 'Operations workspace', operations: 'Operations', vehicleCenter: 'Vehicle center' };
-  const links = [
+  const labels = lang === 'ar'
+    ? { workspace: 'مساحة العمليات', operations: 'التشغيل', vehicleCenter: 'مركز السيارات', platform: 'إدارة المنصة' }
+    : { workspace: 'Operations workspace', operations: 'Operations', vehicleCenter: 'Vehicle center', platform: 'Platform administration' };
+  const tenantLinks = [
     { to: '/', icon: HiOutlineHome, label: t.dashboard },
     { to: '/cars', icon: HiOutlineSearchCircle, label: labels.vehicleCenter },
     { to: '/containers', icon: HiOutlineCube, label: t.containers },
     { to: '/finance', icon: HiOutlineCreditCard, label: t.finance },
     { to: '/subscription', icon: HiOutlineBadgeCheck, label: t.subscription },
+  ];
+  const links = [
+    ...(organization ? tenantLinks : []),
+    ...(isPlatformAdmin ? [{ to: '/platform', icon: HiOutlineShieldCheck, label: labels.platform }] : []),
   ];
 
   const linkClass = ({ isActive }) =>
