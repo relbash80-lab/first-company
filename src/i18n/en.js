@@ -5,7 +5,7 @@ const en = {
   cars: 'Cars',
   containers: 'Containers',
   payments: 'Payments',
-  finance: 'Financial Center',
+  finance: 'Account Statement',
   subscription: 'Subscription & Plans',
   settings: 'Settings',
   logout: 'Logout',

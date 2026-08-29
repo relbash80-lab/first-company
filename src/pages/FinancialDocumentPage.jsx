@@ -9,9 +9,10 @@ import { amountInArabicWords, formatDocumentDate, formatMoney } from '../utils/f
 
 function DocumentShell({ children, title }) {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
   return <div className="min-h-screen bg-slate-100 print:bg-white py-8 print:py-0 px-4 print:px-0">
     <div className="no-print max-w-[210mm] mx-auto mb-4 flex items-center justify-between gap-3">
-      <button onClick={() => navigate('/finance')} className="bg-white border border-slate-300 rounded-lg px-4 py-2 flex items-center gap-2 text-slate-700"><HiOutlineArrowRight />المركز المالي</button>
+      <button onClick={() => navigate('/finance')} className="bg-white border border-slate-300 rounded-lg px-4 py-2 flex items-center gap-2 text-slate-700"><HiOutlineArrowRight />{lang === 'ar' ? 'كشف حساب' : 'Account Statement'}</button>
       <button onClick={() => window.print()} className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-5 py-2.5 flex items-center gap-2 font-bold"><HiOutlinePrinter />طباعة / حفظ PDF</button>
     </div>
     <article aria-label={title} className="financial-document max-w-[210mm] min-h-[297mm] mx-auto bg-white shadow-xl print:shadow-none px-[16mm] py-[14mm] print:px-[14mm] print:py-[12mm] text-slate-800">
