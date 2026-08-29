@@ -29,6 +29,7 @@ function deviceInfo() {
 }
 
 export function featureForPath(pathname) {
+  if (pathname.startsWith('/platform')) return 'audit_log';
   if (pathname.startsWith('/cars')) return 'vehicle_center';
   if (pathname.startsWith('/containers')) return 'containers';
   if (pathname.startsWith('/finance') || pathname.startsWith('/payments')) return 'finance';

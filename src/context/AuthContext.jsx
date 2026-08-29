@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { neonAuth, supabase } from '../config/supabase';
 
 const AuthContext = createContext(null);
+const legacyIdentityTasks = new Map();
 
 function appUrl(path = '') {
   return new URL(`${import.meta.env.BASE_URL}${path}`, window.location.origin).toString();
@@ -13,8 +14,19 @@ export function AuthProvider({ children }) {
 
   const hydrateLegacyIdentity = async (nextSession) => {
     if (!nextSession?.user) return null;
-    const { data: legacyUserId, error } = await supabase.rpc('ensure_current_user_mapping');
-    if (error) throw error;
+    const neonUserId = nextSession.user.id;
+    let identityTask = legacyIdentityTasks.get(neonUserId);
+
+    if (!identityTask) {
+      identityTask = supabase.rpc('ensure_current_user_mapping').then(({ data, error }) => {
+        if (error) throw error;
+        return data;
+      });
+      legacyIdentityTasks.set(neonUserId, identityTask);
+      identityTask.catch(() => legacyIdentityTasks.delete(neonUserId));
+    }
+
+    const legacyUserId = await identityTask;
     if (!legacyUserId) throw new Error('Unable to link the authenticated user to an application profile.');
     return {
       ...nextSession,
