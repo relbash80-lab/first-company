@@ -1,20 +1,8 @@
 begin;
 
--- A vehicle can be opened as an incomplete record and completed later.  VIN
--- uniqueness is enforced only once the standard 17-character VIN is present;
--- short work-in-progress values may coexist while users gather the details.
-alter table public.vehicles alter column vin drop not null;
-update public.vehicles set vin = null where trim(coalesce(vin, '')) = '';
-alter table public.vehicles drop constraint if exists vehicles_organization_id_vin_key;
-alter table public.vehicles drop constraint if exists vehicles_vin_max_length_check;
-alter table public.vehicles
-  add constraint vehicles_vin_max_length_check
-  check (vin is null or char_length(trim(vin)) between 1 and 17);
-
-create unique index if not exists vehicles_org_complete_vin_uidx
-  on public.vehicles (organization_id, upper(trim(vin)))
-  where vin is not null and char_length(trim(vin)) = 17;
-
+-- Hotfix for browser forms: optional number inputs are submitted as an empty
+-- string. Convert those values to NULL before numeric casts so an incomplete
+-- vehicle can always be saved and completed later.
 create or replace function public.save_vehicle_record(
   p_organization_id uuid,
   p_vehicle_id uuid,

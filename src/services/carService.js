@@ -13,6 +13,12 @@ function splitVehicleName(value = '') {
   return { year, make, model: parts.join(' '), trim: '' };
 }
 
+function optionalNumber(value) {
+  if (value === null || value === undefined || String(value).trim() === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function toPayload(car) {
   const identity = splitVehicleName(car.yearMakeModel);
   const hasVehicleData = [
@@ -25,6 +31,8 @@ function toPayload(car) {
     ...car,
     ...identity,
     vin: car.vin?.trim().toUpperCase(),
+    purchasePaid: optionalNumber(car.purchasePaid),
+    shippingPaid: optionalNumber(car.shippingPaid),
     status: STATUS_TO_DB[car.status] || 'purchased',
     charges: [
       { category: 'purchase', description: 'Vehicle purchase', amount: Number(car.buyingPrice) || 0 },
