@@ -3,6 +3,7 @@ import { neonAuth, supabase } from '../config/supabase';
 
 const AuthContext = createContext(null);
 const legacyIdentityTasks = new Map();
+const IDENTITY_RETRY_DELAYS_MS = [0, 300, 900];
 
 function appUrl(path = '') {
   return new URL(`${import.meta.env.BASE_URL}${path}`, window.location.origin).toString();
@@ -18,10 +19,19 @@ export function AuthProvider({ children }) {
     let identityTask = legacyIdentityTasks.get(neonUserId);
 
     if (!identityTask) {
-      identityTask = supabase.rpc('ensure_current_user_mapping').then(({ data, error }) => {
-        if (error) throw error;
-        return data;
-      });
+      identityTask = (async () => {
+        let lastError;
+
+        for (const delayMs of IDENTITY_RETRY_DELAYS_MS) {
+          if (delayMs) await new Promise((resolve) => window.setTimeout(resolve, delayMs));
+          const { data, error } = await supabase.rpc('ensure_current_user_mapping');
+          if (!error) return data;
+          lastError = error;
+          if (/EMAIL_VERIFICATION_REQUIRED|AUTH_USER_NOT_FOUND/.test(error.message ?? '')) break;
+        }
+
+        throw lastError;
+      })();
       legacyIdentityTasks.set(neonUserId, identityTask);
       identityTask.catch(() => legacyIdentityTasks.delete(neonUserId));
     }
@@ -53,16 +63,8 @@ export function AuthProvider({ children }) {
       }
     };
 
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (!mounted) return;
-      if (error) {
-        console.error('Unable to restore Neon session', error);
-        setLoading(false);
-        return;
-      }
-      syncSession(data?.session ?? null);
-    });
-
+    // The Neon Supabase adapter emits INITIAL_SESSION when the listener is
+    // registered, so a separate getSession() here would duplicate hydration.
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       syncSession(nextSession);
     });
