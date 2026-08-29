@@ -9,7 +9,7 @@ export default function Header({ onMenuToggle, title }) {
   const { organization, role } = useOrganization();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
-  const labels = lang === 'ar' ? { placeholder: 'ابحث بـ VIN أو رقم اللوت أو السيارة أو المالك...', account: 'حساب الشركة', notifications: 'الإشعارات' } : { placeholder: 'Search VIN, lot, vehicle or owner...', account: 'Company account', notifications: 'Notifications' };
+  const labels = lang === 'ar' ? { placeholder: 'ابحث بـ VIN أو رقم اللوت أو السيارة أو المالك...', account: 'حساب الشركة', notifications: 'الإشعارات', menu: 'فتح القائمة' } : { placeholder: 'Search VIN, lot, vehicle or owner...', account: 'Company account', notifications: 'Notifications', menu: 'Open menu' };
 
   function submit(event) {
     event.preventDefault();
@@ -21,6 +21,7 @@ export default function Header({ onMenuToggle, title }) {
     <header className="app-header sticky top-0 z-30 flex min-h-18 items-center gap-3 border-b border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur md:px-6">
       <button
         onClick={onMenuToggle}
+        aria-label={labels.menu}
         className="lg:hidden rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50"
       >
         {lang === 'ar' ? (
