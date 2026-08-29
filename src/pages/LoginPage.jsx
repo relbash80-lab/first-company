@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { HiOutlineArrowRightOnRectangle, HiOutlineBuildingOffice2, HiOutlineCheckCircle } from 'react-icons/hi2';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { IDLE_LOGOUT_NOTICE_KEY } from '../utils/sessionIdle';
 
 export default function LoginPage() {
   const resetToken = new URLSearchParams(window.location.search).get('token');
@@ -15,6 +16,17 @@ export default function LoginPage() {
   const { login, signup, resetPassword, completePasswordReset } = useAuth();
   const { toggleLanguage, lang } = useLanguage();
   const ar = lang === 'ar';
+
+  useEffect(() => {
+    if (window.sessionStorage.getItem(IDLE_LOGOUT_NOTICE_KEY) !== '1') return;
+    window.sessionStorage.removeItem(IDLE_LOGOUT_NOTICE_KEY);
+    toast.error(
+      ar
+        ? 'تم تسجيل خروجك تلقائيًا بعد 10 دقائق دون نشاط لحماية حسابك.'
+        : 'You were signed out after 10 minutes of inactivity to protect your account.',
+      { duration: 6500 }
+    );
+  }, [ar]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
