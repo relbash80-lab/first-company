@@ -49,6 +49,9 @@ const en = {
   // Cars
   addCar: 'Add Car',
   editCar: 'Edit Car',
+  incompleteVehicle: 'Incomplete vehicle',
+  carDraftHint: 'Every field is optional. Save the vehicle now and complete its details at any time.',
+  saveAndContinueLater: 'Save and continue later',
   carDetails: 'Car Details',
   yearMakeModel: 'Year / Make / Model',
   vin: 'VIN',
@@ -126,14 +129,14 @@ const en = {
   paymentHistory: 'Payment History',
 
   // Messages
-  carAdded: 'Car added successfully',
+  carAdded: 'Vehicle saved; its details can be completed later',
   carUpdated: 'Car updated successfully',
   carDeleted: 'Car deleted successfully',
   paymentAdded: 'Payment added successfully',
   confirmDelete: 'Are you sure you want to delete?',
   vinExists: 'VIN already exists',
   requiredField: 'This field is required',
-  invalidVin: 'Invalid VIN (must be 17 characters)',
+  invalidVin: 'You can save now and complete the 17-character VIN later',
   subscriptionBlocked: 'A new vehicle cannot be created. Renew the subscription or review plan limits on the Subscription & Plans page.',
 
   // Currency

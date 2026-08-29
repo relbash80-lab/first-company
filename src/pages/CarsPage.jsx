@@ -91,7 +91,7 @@ export default function CarsPage() {
     fromDate: 'من تاريخ الشراء', toDate: 'إلى تاريخ الشراء', sort: 'الفرز', newest: 'الأحدث إضافة', oldest: 'الأقدم إضافة', byModel: 'اسم السيارة', highestBalance: 'أعلى رصيد', all: 'الكل',
     saveSearch: 'حفظ البحث', searchName: 'اسم البحث المحفوظ', noSavedSearches: 'لا توجد بحوث محفوظة بعد.', deleteSaved: 'حذف البحث المحفوظ', saved: 'تم حفظ البحث', savedDeleted: 'تم حذف البحث المحفوظ', reset: 'إعادة الضبط', close: 'إغلاق',
     noResults: 'لا توجد سيارات تطابق البحث', noResultsHint: 'جرّب إزالة بعض الفلاتر أو البحث برقم VIN أو اللوت.', showing: 'عرض', of: 'من', perPage: 'في الصفحة', selected: 'محدد', clearSelection: 'إلغاء التحديد',
-    openSource: 'فتح موقع المصدر', other: 'أخرى', noLocation: 'لا يوجد موقع', notAssigned: 'غير مرتبطة بحاوية', preferencesUnavailable: 'تحتاج ميزات المتابعة إلى تطبيق ترحيل UI-2 في Neon.',
+    openSource: 'فتح موقع المصدر', other: 'أخرى', noLocation: 'لا يوجد موقع', notAssigned: 'غير مرتبطة بحاوية', incompleteVehicle: 'سيارة غير مكتملة', preferencesUnavailable: 'تحتاج ميزات المتابعة إلى تطبيق ترحيل UI-2 في Neon.',
   } : {
     eyebrow: 'My vehicle center', title: 'Vehicle center', subtitle: 'Search, monitor and act from one auction-familiar operational record.',
     addVehicle: 'Add vehicle', searchPlaceholder: 'VIN, lot, vehicle, owner or container...', filters: 'Filters', advancedFilters: 'Advanced filters', filtersHint: 'Narrow the results and save the filter combination for later.',
@@ -102,7 +102,7 @@ export default function CarsPage() {
     fromDate: 'Purchase date from', toDate: 'Purchase date to', sort: 'Sort', newest: 'Newest added', oldest: 'Oldest added', byModel: 'Vehicle name', highestBalance: 'Highest balance', all: 'All',
     saveSearch: 'Save search', searchName: 'Saved search name', noSavedSearches: 'No saved searches yet.', deleteSaved: 'Delete saved search', saved: 'Search saved', savedDeleted: 'Saved search deleted', reset: 'Reset', close: 'Close',
     noResults: 'No vehicles match this search', noResultsHint: 'Remove some filters or search by VIN or lot number.', showing: 'Showing', of: 'of', perPage: 'per page', selected: 'selected', clearSelection: 'Clear selection',
-    openSource: 'Open source website', other: 'Other', noLocation: 'No location', notAssigned: 'Not assigned to a container', preferencesUnavailable: 'Watchlist features require the UI-2 Neon migration.',
+    openSource: 'Open source website', other: 'Other', noLocation: 'No location', notAssigned: 'Not assigned to a container', incompleteVehicle: 'Incomplete vehicle', preferencesUnavailable: 'Watchlist features require the UI-2 Neon migration.',
   };
 
   const statusLabels = useMemo(() => ({

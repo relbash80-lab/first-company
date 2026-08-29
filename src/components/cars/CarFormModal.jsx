@@ -5,7 +5,7 @@ import { HiOutlineX } from 'react-icons/hi';
 const INITIAL_STATE = {
   yearMakeModel: '',
   vin: '',
-  auction: 'Copart',
+  auction: '',
   lotStock: '',
   buyingLocation: '',
   buyingDate: '',
@@ -35,6 +35,12 @@ export default function CarFormModal({ car, onSave, onClose }) {
   const isEdit = !!car;
   const [form, setForm] = useState(car ? { ...INITIAL_STATE, ...car } : INITIAL_STATE);
   const [saving, setSaving] = useState(false);
+  const hasVehicleData = [
+    form.yearMakeModel, form.vin, form.owner, form.lotStock, form.buyingLocation,
+    form.buyingDate, form.wireDate, form.buyingPrice, form.otherFees,
+    form.purchasePaid, form.destination, form.shippingPort, form.containerNumber,
+    form.shippingLine, form.inlandPrice, form.oceanPrice, form.shippingPaid,
+  ].some((value) => String(value ?? '').trim() !== '');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -43,12 +49,12 @@ export default function CarFormModal({ car, onSave, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.vin.length !== 17) {
-      return;
-    }
     setSaving(true);
-    await onSave(form, isEdit);
-    setSaving(false);
+    try {
+      await onSave(form, isEdit);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-sm";
@@ -68,6 +74,9 @@ export default function CarFormModal({ car, onSave, onClose }) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-6">
+          <p className="rounded-xl border border-teal-100 bg-teal-50 px-4 py-3 text-sm leading-6 text-teal-800">
+            {t.carDraftHint}
+          </p>
           {/* === قسم بيانات السيارة === */}
           <div>
             <h3 className="text-lg font-semibold text-teal-700 mb-3 pb-2 border-b border-teal-100">
@@ -75,19 +84,20 @@ export default function CarFormModal({ car, onSave, onClose }) {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className={labelClass}>{t.yearMakeModel} *</label>
-                <input name="yearMakeModel" value={form.yearMakeModel} onChange={handleChange} required className={inputClass} placeholder="2019 HYUNDAI SANTA FE SEL 2.4L" />
+                <label className={labelClass}>{t.yearMakeModel}</label>
+                <input name="yearMakeModel" value={form.yearMakeModel} onChange={handleChange} className={inputClass} placeholder="2019 HYUNDAI SANTA FE SEL 2.4L" />
               </div>
               <div>
-                <label className={labelClass}>{t.vin} *</label>
-                <input name="vin" value={form.vin} onChange={handleChange} required maxLength={17} minLength={17} className={inputClass} placeholder="5NMS3CAD4KH132040" dir="ltr" disabled={isEdit} />
+                <label className={labelClass}>{t.vin}</label>
+                <input name="vin" value={form.vin} onChange={handleChange} maxLength={17} className={inputClass} placeholder="5NMS3CAD4KH132040" dir="ltr" />
                 {form.vin && form.vin.length !== 17 && (
-                  <p className="text-red-500 text-xs mt-1">{t.invalidVin}</p>
+                  <p className="mt-1 text-xs text-amber-600">{t.invalidVin}</p>
                 )}
               </div>
               <div>
                 <label className={labelClass}>{t.auction}</label>
                 <select name="auction" value={form.auction} onChange={handleChange} className={inputClass}>
+                  <option value="">--</option>
                   <option value="Copart">Copart</option>
                   <option value="IAAI">IAAI</option>
                 </select>
@@ -109,8 +119,8 @@ export default function CarFormModal({ car, onSave, onClose }) {
                 <input name="wireDate" type="date" value={form.wireDate} onChange={handleChange} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>{t.owner} *</label>
-                <input name="owner" value={form.owner} onChange={handleChange} required className={inputClass} />
+                <label className={labelClass}>{t.owner}</label>
+                <input name="owner" value={form.owner} onChange={handleChange} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>{t.status}</label>
@@ -138,7 +148,7 @@ export default function CarFormModal({ car, onSave, onClose }) {
               </div>
               <div>
                 <label className={labelClass}>{t.commission} ($)</label>
-                <input value="100" disabled className={`${inputClass} bg-gray-100`} dir="ltr" />
+                <input value={hasVehicleData ? '100' : ''} disabled className={`${inputClass} bg-gray-100`} dir="ltr" placeholder="—" />
               </div>
               <div>
                 <label className={labelClass}>{t.otherFees} ($)</label>
@@ -219,7 +229,7 @@ export default function CarFormModal({ car, onSave, onClose }) {
               {t.cancel}
             </button>
             <button type="submit" disabled={saving} className="px-5 py-2.5 rounded-lg bg-teal-600 text-white hover:bg-teal-700 font-medium disabled:opacity-50">
-              {saving ? t.loading : t.save}
+              {saving ? t.loading : isEdit ? t.save : t.saveAndContinueLater}
             </button>
           </div>
         </form>

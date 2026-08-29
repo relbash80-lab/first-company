@@ -44,8 +44,8 @@ export default function CarDetailModal({ car, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-200">
           <div>
-            <h2 className="text-xl font-bold text-gray-800">{car.yearMakeModel}</h2>
-            <p className="text-sm text-gray-500 font-mono mt-1" dir="ltr">{car.vin}</p>
+            <h2 className="text-xl font-bold text-gray-800">{car.yearMakeModel || t.incompleteVehicle}</h2>
+            <p className="text-sm text-gray-500 font-mono mt-1" dir="ltr">{car.vin || '—'}</p>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100">
             <HiOutlineX className="w-5 h-5" />
@@ -76,7 +76,7 @@ export default function CarDetailModal({ car, onClose }) {
           <div className="bg-green-50 rounded-lg p-4">
             <h3 className="text-sm font-semibold text-green-700 mb-2">💰 {t.financialSummary}</h3>
             <InfoRow label={t.buyingPrice} value={fmt(car.buyingPrice)} dir="ltr" />
-            <InfoRow label={t.commission} value="$100.00" dir="ltr" />
+            <InfoRow label={t.commission} value={fmt(car.commission)} dir="ltr" />
             <InfoRow label={t.otherFees} value={fmt(car.otherFees)} dir="ltr" />
             <InfoRow label={t.subTotal} value={fmt(calcPurchaseSubTotal(car))} dir="ltr" color="text-gray-900 font-bold" />
             <InfoRow label={t.paid} value={fmt(car.purchasePaid)} dir="ltr" color="text-green-600" />

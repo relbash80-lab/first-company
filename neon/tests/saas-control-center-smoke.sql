@@ -37,6 +37,41 @@ values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-1111111
 insert into public.subscriptions (organization_id, plan_id, status, trial_ends_at)
 values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'smoke', 'trialing', now() + interval '14 days');
 
+select set_config(
+  'app.smoke_vehicle_id',
+  public.save_vehicle_record('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', null, '{}'::jsonb)::text,
+  false
+);
+
+do $$
+begin
+  if not exists (
+    select 1 from public.vehicles
+    where id = current_setting('app.smoke_vehicle_id')::uuid and vin is null
+  ) then raise exception 'Empty vehicle draft was not saved'; end if;
+  if exists (
+    select 1 from public.charges
+    where vehicle_id = current_setting('app.smoke_vehicle_id')::uuid
+  ) then raise exception 'Empty vehicle draft created charges'; end if;
+end;
+$$;
+
+select public.save_vehicle_record(
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  current_setting('app.smoke_vehicle_id')::uuid,
+  '{"vin":"1HGBH41","year":"2024","make":"Test"}'::jsonb
+);
+
+do $$
+begin
+  if not exists (
+    select 1 from public.vehicles
+    where id = current_setting('app.smoke_vehicle_id')::uuid
+      and vin = '1HGBH41' and year = 2024 and make = 'Test'
+  ) then raise exception 'Vehicle draft could not be completed later'; end if;
+end;
+$$;
+
 insert into public.organization_members (organization_id, user_id, role, is_active, invited_by)
 values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '22222222-2222-2222-2222-222222222222', 'viewer', true, '11111111-1111-1111-1111-111111111111');
 

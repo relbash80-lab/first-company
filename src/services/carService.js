@@ -15,6 +15,12 @@ function splitVehicleName(value = '') {
 
 function toPayload(car) {
   const identity = splitVehicleName(car.yearMakeModel);
+  const hasVehicleData = [
+    car.yearMakeModel, car.vin, car.owner, car.lotStock, car.buyingLocation,
+    car.buyingDate, car.wireDate, car.buyingPrice, car.otherFees,
+    car.purchasePaid, car.destination, car.shippingPort, car.containerNumber,
+    car.shippingLine, car.inlandPrice, car.oceanPrice, car.shippingPaid,
+  ].some((value) => String(value ?? '').trim() !== '');
   return {
     ...car,
     ...identity,
@@ -22,12 +28,17 @@ function toPayload(car) {
     status: STATUS_TO_DB[car.status] || 'purchased',
     charges: [
       { category: 'purchase', description: 'Vehicle purchase', amount: Number(car.buyingPrice) || 0 },
-      { category: 'commission', description: 'Company commission', amount: 100 },
+      { category: 'commission', description: 'Company commission', amount: hasVehicleData ? 100 : 0 },
       { category: 'other_purchase', description: 'Other purchase fees', amount: Number(car.otherFees) || 0 },
       { category: 'inland_shipping', description: 'Inland shipping', amount: Number(car.inlandPrice) || 0 },
       { category: 'ocean_shipping', description: 'Ocean shipping', amount: Number(car.oceanPrice) || 0 },
     ],
   };
+}
+
+function isVinUniqueViolation(error) {
+  return error?.code === '23505'
+    && /vehicles_(organization_id_vin_key|org_complete_vin_uidx)/.test(error.message ?? '');
 }
 
 async function loadCars(organizationId) {
@@ -65,7 +76,7 @@ async function loadCars(organizationId) {
     return {
       id: vehicle.id,
       yearMakeModel: [vehicle.year, vehicle.make, vehicle.model, vehicle.trim].filter(Boolean).join(' '),
-      vin: vehicle.vin,
+      vin: vehicle.vin || '',
       owner: vehicle.clients?.name || '',
       auction: vehicle.auction || 'Other',
       lotStock: vehicle.lot_stock || '',
@@ -88,7 +99,7 @@ async function loadCars(organizationId) {
 export async function addCar(organizationId, carData) {
   const { data, error } = await supabase.rpc('save_vehicle_record', { p_organization_id: organizationId, p_vehicle_id: null, p_payload: toPayload(carData) });
   if (error) {
-    if (error.code === '23505' && error.message.includes('vehicles_organization_id_vin_key')) throw new Error('VIN_EXISTS');
+    if (isVinUniqueViolation(error)) throw new Error('VIN_EXISTS');
     if (error.message?.includes('SUBSCRIPTION_BLOCKED:')) throw new Error(error.message.match(/SUBSCRIPTION_BLOCKED:([a-z_]+)/)?.[1] || 'subscription_blocked');
     throw error;
   }
@@ -98,6 +109,7 @@ export async function addCar(organizationId, carData) {
 export async function updateCar(organizationId, id, carData) {
   const { data, error } = await supabase.rpc('save_vehicle_record', { p_organization_id: organizationId, p_vehicle_id: id, p_payload: toPayload(carData) });
   if (error) {
+    if (isVinUniqueViolation(error)) throw new Error('VIN_EXISTS');
     if (error.message?.includes('SUBSCRIPTION_BLOCKED:')) throw new Error(error.message.match(/SUBSCRIPTION_BLOCKED:([a-z_]+)/)?.[1] || 'subscription_blocked');
     throw error;
   }
@@ -125,7 +137,7 @@ export function subscribeToCars(organizationId, callback, onError = console.erro
   return () => { active = false; clearTimeout(timer); window.clearInterval(interval); };
 }
 
-export const calcPurchaseSubTotal = (car) => (Number(car.buyingPrice) || 0) + (Number(car.commission) || 100) + (Number(car.otherFees) || 0);
+export const calcPurchaseSubTotal = (car) => (Number(car.buyingPrice) || 0) + (Number(car.commission) || 0) + (Number(car.otherFees) || 0);
 export const calcShippingSubTotal = (car) => (Number(car.inlandPrice) || 0) + (Number(car.oceanPrice) || 0);
 export const calcPurchaseRemaining = (car) => car.purchaseRemaining ?? Math.max(0, calcPurchaseSubTotal(car) - (Number(car.purchasePaid) || 0));
 export const calcShippingRemaining = (car) => car.shippingRemaining ?? Math.max(0, calcShippingSubTotal(car) - (Number(car.shippingPaid) || 0));

@@ -53,8 +53,8 @@ export default function VehicleCard({
     <div className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="truncate text-sm font-black text-slate-900" title={car.yearMakeModel}>{car.yearMakeModel}</h3>
-          <p className="mt-1 truncate font-mono text-[11px] text-slate-500" dir="ltr">{car.vin}</p>
+          <h3 className="truncate text-sm font-black text-slate-900" title={car.yearMakeModel || labels.incompleteVehicle}>{car.yearMakeModel || labels.incompleteVehicle}</h3>
+          <p className="mt-1 truncate font-mono text-[11px] text-slate-500" dir="ltr">{car.vin || '—'}</p>
         </div>
         <StatusBadge status={car.status} label={statusLabel} dot={false} />
       </div>
