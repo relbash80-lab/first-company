@@ -54,8 +54,8 @@ export default function OrganizationSetupPage() {
           </h1>
           <p className="text-slate-300 text-lg leading-8 max-w-2xl">
             {isArabic
-              ? 'كل شركة تحصل على بياناتها وأعضائها واشتراكها بصورة مستقلة. سياسات Supabase تمنع اختلاط بيانات المشتركين.'
-              : 'Every company gets isolated data, members, and subscription. Supabase policies prevent tenant data from mixing.'}
+              ? 'كل شركة تحصل على بياناتها وأعضائها واشتراكها بصورة مستقلة. سياسات Neon RLS تمنع اختلاط بيانات المشتركين.'
+              : 'Every company gets isolated data, members, and subscription. Neon RLS policies prevent tenant data from mixing.'}
           </p>
           <div className="grid sm:grid-cols-2 gap-4 mt-10">
             <div className="rounded-2xl bg-white/5 border border-white/10 p-5"><HiOutlineShieldCheck className="w-7 h-7 text-teal-300 mb-3"/><b>{isArabic ? 'عزل محكم' : 'Strong isolation'}</b><p className="text-sm text-slate-400 mt-2">RLS على كل جداول التشغيل.</p></div>

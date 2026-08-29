@@ -13,4 +13,17 @@ export default defineConfig(({ command }) => ({
     port: 3000,
     open: true,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('@neondatabase') || id.includes('better-auth')) return 'neon-vendor';
+          if (id.includes('react-icons')) return 'icons-vendor';
+          if (id.includes('react-dom') || id.includes('react-router') || /node_modules[\\/]react[\\/]/.test(id)) return 'react-vendor';
+          return undefined;
+        },
+      },
+    },
+  },
 }))

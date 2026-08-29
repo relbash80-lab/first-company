@@ -12,6 +12,7 @@ import {
   HiOutlineGlobeAlt,
   HiOutlineSearchCircle,
   HiOutlineShieldCheck,
+  HiOutlineSparkles,
 } from 'react-icons/hi';
 import { useOrganization } from '../../context/OrganizationContext';
 
@@ -21,14 +22,15 @@ export default function Sidebar({ isOpen, onClose }) {
   const { organization, isPlatformAdmin } = useOrganization();
 
   const labels = lang === 'ar'
-    ? { workspace: 'مساحة العمليات', operations: 'التشغيل', vehicleCenter: 'مركز السيارات', platform: 'إدارة المنصة' }
-    : { workspace: 'Operations workspace', operations: 'Operations', vehicleCenter: 'Vehicle center', platform: 'Platform administration' };
+    ? { workspace: 'مساحة العمليات', operations: 'التشغيل', vehicleCenter: 'مركز السيارات', platform: 'إدارة المنصة', updates: 'سجل الإصدارات' }
+    : { workspace: 'Operations workspace', operations: 'Operations', vehicleCenter: 'Vehicle center', platform: 'Platform administration', updates: 'Release notes' };
   const tenantLinks = [
     { to: '/', icon: HiOutlineHome, label: t.dashboard },
     { to: '/cars', icon: HiOutlineSearchCircle, label: labels.vehicleCenter },
     { to: '/containers', icon: HiOutlineCube, label: t.containers },
     { to: '/finance', icon: HiOutlineCreditCard, label: t.finance },
     { to: '/subscription', icon: HiOutlineBadgeCheck, label: t.subscription },
+    { to: '/updates', icon: HiOutlineSparkles, label: labels.updates },
   ];
   const links = [
     ...(organization ? tenantLinks : []),

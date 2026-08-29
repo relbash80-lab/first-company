@@ -1,12 +1,25 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useLanguage } from '../../context/LanguageContext';
+import { useOrganization } from '../../context/OrganizationContext';
+import { recordUsage } from '../../services/usageService';
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { lang } = useLanguage();
+  const { organizationId } = useOrganization();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!organizationId) return undefined;
+    const report = () => recordUsage({ organizationId, pathname: location.pathname }).catch(() => {});
+    report();
+    const onVisibility = () => { if (document.visibilityState === 'visible') report(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [organizationId, location.pathname]);
 
   return (
     <div className="min-h-screen bg-[#f4f6f8]">

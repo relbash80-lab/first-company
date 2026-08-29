@@ -121,12 +121,8 @@ export function subscribeToCars(organizationId, callback, onError = console.erro
     timer = setTimeout(() => loadCars(organizationId).then((cars) => active && callback(cars)).catch(onError), 80);
   };
   refresh();
-  const channel = supabase.channel(`cars:${organizationId}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles', filter: `organization_id=eq.${organizationId}` }, refresh)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'payments', filter: `organization_id=eq.${organizationId}` }, refresh)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'containers', filter: `organization_id=eq.${organizationId}` }, refresh)
-    .subscribe();
-  return () => { active = false; clearTimeout(timer); supabase.removeChannel(channel); };
+  const interval = window.setInterval(refresh, 15000);
+  return () => { active = false; clearTimeout(timer); window.clearInterval(interval); };
 }
 
 export const calcPurchaseSubTotal = (car) => (Number(car.buyingPrice) || 0) + (Number(car.commission) || 100) + (Number(car.otherFees) || 0);

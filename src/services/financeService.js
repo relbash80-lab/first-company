@@ -181,10 +181,7 @@ export async function issueCreditNote(organizationId, creditNoteId) {
 }
 
 export function subscribeToFinance(organizationId, refresh) {
-  const channel = supabase.channel(`finance:${organizationId}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices', filter: `organization_id=eq.${organizationId}` }, refresh)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'receipts', filter: `organization_id=eq.${organizationId}` }, refresh)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'credit_notes', filter: `organization_id=eq.${organizationId}` }, refresh)
-    .subscribe();
-  return () => supabase.removeChannel(channel);
+  if (!organizationId) return () => {};
+  const interval = window.setInterval(refresh, 15000);
+  return () => window.clearInterval(interval);
 }

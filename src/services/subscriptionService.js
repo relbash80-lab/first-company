@@ -13,12 +13,13 @@ export async function loadSubscriptionCenter(organizationId) {
     supabase.from('organization_members').select('*', { count: 'exact', head: true }).eq('organization_id', organizationId).eq('is_active', true),
     supabase.from('vehicles').select('*', { count: 'exact', head: true }).eq('organization_id', organizationId).neq('status', 'released'),
     supabase.from('platform_admins').select('user_id').maybeSingle(),
-    supabase.from('usage_counters').select('storage_bytes').eq('organization_id', organizationId).order('period_start', { ascending: false }).limit(1).maybeSingle(),
+    supabase.from('usage_counters').select('*').eq('organization_id', organizationId).order('period_start', { ascending: false }).limit(1).maybeSingle(),
     supabase.rpc('subscription_entitlement', { target_organization_id: organizationId }).maybeSingle(),
+    supabase.from('plan_entitlements').select('*, feature_catalog(*)').order('feature_code'),
   ]);
   throwFirstError(results);
 
-  const [plans, subscription, invoices, members, activeVehicles, platformAdmin, usage, entitlement] = results;
+  const [plans, subscription, invoices, members, activeVehicles, platformAdmin, usage, entitlement, entitlements] = results;
   let pendingPayments = [];
   if (platformAdmin.data) {
     const { data, error } = await supabase
@@ -37,6 +38,8 @@ export async function loadSubscriptionCenter(organizationId) {
     memberCount: members.count ?? 0,
     activeVehicleCount: activeVehicles.count ?? 0,
     storageMb: Math.ceil(Number(usage.data?.storage_bytes || 0) / 1024 / 1024),
+    usage: usage.data ?? null,
+    entitlements: (entitlements.data ?? []).filter((item) => item.plan_id === subscription.data?.plan_id),
     entitlement: entitlement.data ?? null,
     isPlatformAdmin: Boolean(platformAdmin.data),
     pendingPayments,
@@ -105,10 +108,17 @@ export async function configurePlanPricing(planId, monthlyPrice, annualPrice, fe
 }
 
 export function subscribeToSubscription(organizationId, refresh) {
-  const channel = supabase.channel(`subscription:${organizationId}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'subscriptions', filter: `organization_id=eq.${organizationId}` }, refresh)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'subscription_invoices', filter: `organization_id=eq.${organizationId}` }, refresh)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'subscription_payments', filter: `organization_id=eq.${organizationId}` }, refresh)
-    .subscribe();
-  return () => supabase.removeChannel(channel);
+  if (!organizationId) return () => {};
+  let interval = null;
+  const stop = () => { if (interval) window.clearInterval(interval); interval = null; };
+  const start = () => {
+    stop();
+    if (document.visibilityState === 'visible') interval = window.setInterval(refresh, 60000);
+  };
+  const onVisibility = () => {
+    if (document.visibilityState === 'visible') { refresh(); start(); } else stop();
+  };
+  document.addEventListener('visibilitychange', onVisibility);
+  start();
+  return () => { stop(); document.removeEventListener('visibilitychange', onVisibility); };
 }
